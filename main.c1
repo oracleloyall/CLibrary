@@ -1,0 +1,56 @@
+#include"stats.h"
+#include"log.h"
+const char *LogFileName="log.log";
+struct packet_stats s_stats;
+#ifdef TEST
+#endif
+#include"ring_buffer.h"
+zx_ringbuffer_t t;
+static void* run_read(void *data) {
+	int i = 0;
+	for (i = 0; i <10000000; i++) {
+		char *buffer = zx_ringbuffer_sread(&t);
+		if (buffer) {
+#ifdef TEST
+			printf("read:%s\n", buffer);
+#endif
+			free(buffer);
+		}
+
+	}
+	printf("Ending read\n");
+
+}
+void *test_ring(void *data) {
+	zx_ringbuffer_init(&t, 1000000, 1);
+	int i = 0;
+	for (i = 0; i < 10000000; i++) {
+		char *buff = (char *) malloc(1024);
+		memset(buff, 0, 1024);
+		sprintf(buff, "test_ring:%d", i);
+		zx_ringbuffer_swrite(&t, buff);
+	}
+	printf("Write ending\n");
+}
+
+
+
+void test_log(){
+	//log_file(LogFileName);
+	while(1){
+	log_warn("zhanaofei|100");
+	}
+}
+int main(int argc,char **argv)
+{
+	pthread_t tid,tid2,tid3,tid4;
+	pthread_create(&tid, NULL, run_read, (void *) 0);
+//	pthread_create(&tid2, NULL, run_read, (void *) 0);
+	pthread_create(&tid3, NULL, test_ring, (void *) 0);
+//	pthread_create(&tid4, NULL, test_ring, (void *) 0);
+    pthread_join(tid,NULL);
+//    pthread_join(tid2,NULL);
+    pthread_join(tid3,NULL);
+//    pthread_join(tid4,NULL);
+	return 0;
+}
